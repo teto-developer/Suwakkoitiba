@@ -154,15 +154,16 @@ section {
 
 /* ===== 動画 ===== */
 .video-section {
-  max-width: 900px;
-  margin: 0 auto 30px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 40px;
 }
 
 .responsive-iframe {
-  width: 100%;
-  aspect-ratio: 16 / 9;   /* ← これ重要 */
-  border-radius: 8px;
+  width: 100% !important;
+  height: 600px !important;   /* ← 強制で高さ指定 */
   border: 0;
+  border-radius: 12px;
   display: block;
 }
 
