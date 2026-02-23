@@ -41,7 +41,7 @@
 
 
 # EN
-This repository contains the source code for the official website, which introduces and promotes the "Suwakko Market," run by sixth graders at Suwa Elementary School.
+This repository contains the source code for the official website, which introduces and promotes the "Suwakkoitiba," run by sixth graders at Suwa Elementary School.
 
 ---
 
