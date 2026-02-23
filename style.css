@@ -154,34 +154,17 @@ section {
 
 /* ===== 動画 ===== */
 .video-section {
-  max-width: 900px;
+  max-width: 700px;   /* 横を小さめに制限 */
   margin: 0 auto;
-  padding: 0 10px;
 }
 
-.video-item {
-  margin-bottom: 40px;
-}
-
-.video-title {
-  text-align: center;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
-/* 16:9固定 */
 .video-wrapper {
-  position: relative;
   width: 100%;
-  padding-top: 56.25%;
 }
 
 .video-wrapper iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 100%;
+  height: 400px;   /* ← 高さを固定 */
   border: 0;
   border-radius: 12px;
 }
