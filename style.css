@@ -154,8 +154,9 @@ section {
 
 /* ===== 動画 ===== */
 .video-section {
-  max-width: 900px;   /* ← ちょうどいい */
+  max-width: 900px;
   margin: 0 auto;
+  padding: 0 10px;
 }
 
 .video-item {
