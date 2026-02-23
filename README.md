@@ -1,4 +1,4 @@
-# 諏訪っ子市場（すわっこ市場）/Suwakkomarket
+# 諏訪っ子市場（すわっこ市場）/Suwakkoitiba
 
 # JP
 
