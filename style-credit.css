@@ -7,8 +7,24 @@ body{
   padding:20px;
 }
 
+/* 画面中央配置 */
+.credit-page{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  text-align:center;
+}
+
+/* ERROR文字だけ赤 */
+.error-text{
+  color:red;
+}
+
+/* ターミナルカーソルも中央対応 */
 #retro-screen{
   white-space:pre;
+  position:relative;
 }
 
 #retro-screen::after{
