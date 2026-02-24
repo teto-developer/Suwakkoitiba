@@ -314,35 +314,43 @@ footer {
 /* =========================
    Retro Credit Mode
 ========================= */
-body.retro {
-  background: #000;
-  color: #00cc00;
-  font-family: 'VT323', monospace;
-  font-size: 28px;
-  margin: 0;
-  padding: 20px;
-  overflow: hidden;
+body.retro{
+  background:black;
+  color:#00cc00;
+  font-family:'VT323', monospace;
+  font-size:28px;
+  margin:0;
+  padding:20px;
+  overflow:hidden;
 }
 
-body.retro main,
-body.retro header,
-body.retro nav,
-body.retro footer {
-  display: none;
-}
-
-/* ターミナル表示 */
-#retro-screen {
+#retro-screen{
   white-space: pre;
-  min-height: 100vh;
 }
 
 /* カーソル */
-#retro-screen::after {
-  content: "▌";
-  animation: retroBlink 1s steps(1) infinite;
+#retro-screen::after{
+  content:"▌";
+  animation: blink 1s steps(1) infinite;
 }
 
-@keyframes retroBlink {
-  50% { opacity: 0; }
+@keyframes blink{
+  50%{ opacity:0; }
+}
+
+/* ERROR画面 */
+#error-screen{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:black;
+  color:red;
+  padding:40px;
+  cursor:pointer;
+}
+
+#close-text{
+  text-decoration:underline;
+  cursor:pointer;
+  color:red;
 }
