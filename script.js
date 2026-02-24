@@ -181,43 +181,60 @@ window.addEventListener("resize", adjustLayout);
 /* =========================
    Retro Credit Animation
 ========================= */
-
 document.addEventListener("DOMContentLoaded", async () => {
 
   if (!document.body.classList.contains("retro")) return;
 
   const screen = document.getElementById("retro-screen");
 
-  await typeRetro("C:\\> credit\n", screen);
-  await waitRetro(600);
+  await cycleLine("C:\\> credit", screen);
+  await cycleLine("Running credit.exe...", screen);
+  await cycleLine("制作: Ryouse1", screen);
+  await cycleLine("Special Thanks: Everyone", screen);
+  await cycleLine("ERROR: Program terminated.", screen);
+  await cycleLine("Webを閉じてください。", screen);
 
-  await typeRetro("Running credit.exe...\n\n", screen);
-  await waitRetro(600);
-
-  await typeRetro("制作: Ryouse1\n", screen);
-  await waitRetro(500);
-
-  await typeRetro("Special Thanks: Everyone\n\n", screen);
-  await waitRetro(800);
-
-  await typeRetro("ERROR: Program terminated.\n", screen);
-  await typeRetro("Webを閉じてください。\n", screen);
 });
 
-function typeRetro(text, el){
+async function cycleLine(text, el){
+  await typeLine(text, el);
+  await wait(800);
+  await eraseLine(el);
+  await wait(200);
+}
+
+function typeLine(text, el){
   return new Promise(resolve=>{
-    let i=0;
-    const interval=setInterval(()=>{
-      el.textContent+=text[i];
+    let i = 0;
+    el.textContent = "";
+
+    const interval = setInterval(()=>{
+      el.textContent = text.slice(0, i+1);
       i++;
-      if(i>=text.length){
+      if(i >= text.length){
         clearInterval(interval);
         resolve();
       }
-    },35);
+    }, 40);
   });
 }
 
-function waitRetro(ms){
-  return new Promise(resolve=>setTimeout(resolve,ms));
+function eraseLine(el){
+  return new Promise(resolve=>{
+    let text = el.textContent;
+
+    const interval = setInterval(()=>{
+      text = text.slice(0, -1);
+      el.textContent = text;
+
+      if(text.length === 0){
+        clearInterval(interval);
+        resolve();
+      }
+    }, 20);
+  });
+}
+
+function wait(ms){
+  return new Promise(resolve=>setTimeout(resolve, ms));
 }
