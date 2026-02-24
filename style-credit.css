@@ -17,7 +17,13 @@ body{
 }
 
 /* ERROR文字だけ赤 */
-.error-text{
+/* ERRORモード */
+.error-mode{
+  background:black;
+  color:red;
+}
+
+.error-mode #retro-screen{
   color:red;
 }
 
