@@ -9,7 +9,8 @@
     "ウェブ制作: teto(Ryouse1)",
     "画像: teto(Ryouse1)",
     "ポスター、イラスト制作: 諏訪小6年",
-    "Special Thanks: 諏訪小校長、先生"
+    "Special Thanks: 諏訪小校長、先生",
+    "thank you watching!"
   ];
 
   for(let line of lines){
