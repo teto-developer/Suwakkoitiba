@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", async ()=>{
 
   const screen = document.getElementById("retro-screen");
+  if(!screen) return;
 
   const lines = [
     "C:\\> credit.exe",
@@ -15,8 +16,8 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     await wait(700);
   }
 
-  // クレジット終了後にERROR表示
-  showError(screen);
+  // クレジット終了 → ERROR
+  showError();
 
 });
 
@@ -38,7 +39,9 @@ async function typeAndDelete(text, el){
 
 }
 
-function showError(screen){
+function showError(){
+
+  const screen = document.getElementById("retro-screen");
 
   screen.textContent = "";
 
@@ -52,9 +55,9 @@ Webを閉じてください
 
   typeText(errorText, screen);
 
-  document.addEventListener("click", ()=>{
+  screen.onclick = ()=>{
     window.location.href="/game/";
-  }, { once:true });
+  };
 
 }
 
