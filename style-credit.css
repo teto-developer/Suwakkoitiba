@@ -1,38 +1,39 @@
+/* 基本リセット */
 body{
-  background:black;
-  color:#00cc00;
-  font-family:'VT323', monospace;
-  font-size:28px;
   margin:0;
-  padding:20px;
+  font-family:'VT323', monospace;
 }
 
-/* 画面中央配置 */
+/* 通常モード */
 .credit-page{
+  background:black;
+  color:#00cc00;
+
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
   text-align:center;
+
+  font-size:28px;
 }
 
-/* ERROR文字だけ赤 */
 /* ERRORモード */
 .error-mode{
-  background:black;
-  color:red;
+  background:black !important;
+  color:red !important;
 }
 
 .error-mode #retro-screen{
-  color:red;
+  color:red !important;
 }
 
-/* ターミナルカーソルも中央対応 */
+/* ターミナル */
 #retro-screen{
   white-space:pre;
-  position:relative;
 }
 
+/* カーソル */
 #retro-screen::after{
   content:"▌";
   animation:blink 1s steps(1) infinite;
