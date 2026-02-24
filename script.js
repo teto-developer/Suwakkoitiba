@@ -230,7 +230,7 @@ Click below to continue.
 `, errorText);
 
   closeText.addEventListener("click", ()=>{
-    window.location.href = "/game/";
+    window.location.href = "/Suwakkoitiba/game/";
   });
 }
 
