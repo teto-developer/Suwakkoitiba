@@ -1,27 +1,21 @@
 body{
   background:black;
-  color:red;
+  color:#00cc00;
   font-family:'VT323', monospace;
+  font-size:28px;
   margin:0;
+  padding:20px;
 }
 
-#error-screen{
-  position:fixed;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  cursor:pointer;
-}
-
-#error-text{
+#retro-screen{
   white-space:pre;
-  font-size:32px;
 }
 
-#close-text{
-  font-size:26px;
-  text-decoration:underline;
+#retro-screen::after{
+  content:"▌";
+  animation:blink 1s steps(1) infinite;
+}
+
+@keyframes blink{
+  50%{opacity:0;}
 }
