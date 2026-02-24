@@ -1,57 +1,38 @@
 /* =========================
    Retro Credit Animation
 ========================= */
-document.addEventListener("DOMContentLoaded", async ()=>{
+document.addEventListener("DOMContentLoaded", ()=>{
 
-  const screen = document.getElementById("retro-screen");
+  createErrorScreen();
 
-  const lines = [
-    "C:\\> credit",
-    "Running credit.exe...",
-    "制作: Ryouse1",
-    "Special Thanks: Everyone"
-  ];
-
-  for(let line of lines){
-    await backspaceType(line, screen);
-    await wait(800);
-  }
-
-  showError();
 });
 
-async function backspaceType(text, el){
+function createErrorScreen(){
 
-  while(el.textContent.length > 0){
-    el.textContent = el.textContent.slice(0,-1);
-    await wait(15);
-  }
+  const errorScreen = document.createElement("div");
+  errorScreen.id = "error-screen";
 
-  for(let i=0;i<text.length;i++){
-    el.textContent += text[i];
-    await wait(40);
-  }
-}
+  const errorText = document.createElement("pre");
+  errorText.id = "error-text";
 
-function showError(){
+  const closeText = document.createElement("div");
+  closeText.id = "close-text";
+  closeText.textContent = "Webを閉じてください";
 
-  const errorScreen = document.getElementById("error-screen");
-  const errorText = document.getElementById("error-text");
-  const closeText = document.getElementById("close-text");
-
-  errorScreen.style.display = "block";
+  errorScreen.appendChild(errorText);
+  errorScreen.appendChild(closeText);
+  document.body.appendChild(errorScreen);
 
   typeText(`
 FATAL ERROR
 
 System crashed.
-
-Click below to continue.
 `, errorText);
 
   closeText.addEventListener("click", ()=>{
-    window.location.href = "/Suwakkoitiba/game/";
+    window.location.href="/game/";
   });
+
 }
 
 function typeText(text, el){
@@ -66,9 +47,5 @@ function typeText(text, el){
       clearInterval(interval);
     }
 
-  },30);
-}
-
-function wait(ms){
-  return new Promise(r=>setTimeout(r,ms));
+  },40);
 }
