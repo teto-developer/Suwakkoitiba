@@ -187,54 +187,43 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const screen = document.getElementById("retro-screen");
 
-  await cycleLine("C:\\> credit", screen);
-  await cycleLine("Running credit.exe...", screen);
-  await cycleLine("制作: Ryouse1", screen);
-  await cycleLine("Special Thanks: Everyone", screen);
-  await cycleLine("ERROR: Program terminated.", screen);
-  await cycleLine("Webを閉じてください。", screen);
+  const lines = [
+    "C:\\> credit",
+    "Running credit.exe...",
+    "制作: Ryouse1",
+    "Special Thanks: Everyone",
+    "ERROR: Program terminated.",
+    "Webを閉じてください。"
+  ];
+
+  for (let line of lines){
+    await typeWithBackspace(line, screen);
+    await wait(800);
+  }
 
 });
 
-async function cycleLine(text, el){
-  await typeLine(text, el);
-  await wait(800);
-  await eraseLine(el);
-  await wait(200);
-}
+/* =========================
+   Backspace typing effect
+========================= */
 
-function typeLine(text, el){
-  return new Promise(resolve=>{
-    let i = 0;
-    el.textContent = "";
+async function typeWithBackspace(text, el){
 
-    const interval = setInterval(()=>{
-      el.textContent = text.slice(0, i+1);
-      i++;
-      if(i >= text.length){
-        clearInterval(interval);
-        resolve();
-      }
-    }, 40);
-  });
-}
+  // まず普通に打つ
+  for(let i=0;i<text.length;i++){
+    el.textContent += text[i];
+    await wait(40);
+  }
 
-function eraseLine(el){
-  return new Promise(resolve=>{
-    let text = el.textContent;
+  await wait(400);
 
-    const interval = setInterval(()=>{
-      text = text.slice(0, -1);
-      el.textContent = text;
-
-      if(text.length === 0){
-        clearInterval(interval);
-        resolve();
-      }
-    }, 20);
-  });
+  // Backspace風に消す
+  while(el.textContent.length > 0){
+    el.textContent = el.textContent.slice(0,-1);
+    await wait(25);
+  }
 }
 
 function wait(ms){
-  return new Promise(resolve=>setTimeout(resolve, ms));
+  return new Promise(r=>setTimeout(r,ms));
 }
