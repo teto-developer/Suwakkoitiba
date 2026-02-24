@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", async ()=>{
+(async () => {
 
   const screen = document.getElementById("retro-screen");
   if(!screen) return;
@@ -10,20 +10,17 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     "Special Thanks: Everyone"
   ];
 
-  // クレジット表示
   for(let line of lines){
     await typeAndDelete(line, screen);
     await wait(700);
   }
 
-  // クレジット終了 → ERROR
   showError();
 
-});
+})();
 
 async function typeAndDelete(text, el){
 
-  // タイプ
   for(let i=0;i<text.length;i++){
     el.textContent += text[i];
     await wait(40);
@@ -31,7 +28,6 @@ async function typeAndDelete(text, el){
 
   await wait(500);
 
-  // Backspace削除
   while(el.textContent.length > 0){
     el.textContent = el.textContent.slice(0,-1);
     await wait(20);
