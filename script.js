@@ -197,33 +197,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   ];
 
   for (let line of lines){
-    await typeWithBackspace(line, screen);
+    await backspaceReplace(line, screen);
     await wait(800);
   }
 
 });
 
-/* =========================
-   Backspace typing effect
-========================= */
+async function backspaceReplace(text, el){
 
-async function typeWithBackspace(text, el){
+  // ★ まず現在表示を完全に削除
+  while(el.textContent.length > 0){
+    el.textContent = el.textContent.slice(0, -1);
+    await wait(15);
+  }
 
-  // まず普通に打つ
+  // ★ それからタイプ
   for(let i=0;i<text.length;i++){
     el.textContent += text[i];
     await wait(40);
   }
 
-  await wait(400);
-
-  // Backspace風に消す
-  while(el.textContent.length > 0){
-    el.textContent = el.textContent.slice(0,-1);
-    await wait(25);
-  }
 }
 
 function wait(ms){
-  return new Promise(r=>setTimeout(r,ms));
+  return new Promise(r => setTimeout(r, ms));
 }
