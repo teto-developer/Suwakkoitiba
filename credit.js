@@ -54,7 +54,7 @@ Webを閉じてください
   typeText(errorText, screen);
 
   screen.onclick = ()=>{
-    window.location.href="/game/";
+    window.location.href="/Suwakkoitiba/game/";
   };
 
 }
