@@ -310,3 +310,32 @@ footer {
     padding: 10px;
   }
 }
+
+/* =========================
+   Retro Credit Mode
+========================= */
+
+body.retro {
+  background: #000;
+  color: #00cc00;
+  font-family: 'VT323', monospace;
+  font-size: 28px;
+  padding: 40px;
+  overflow: hidden;
+}
+
+body.retro main,
+body.retro header,
+body.retro nav,
+body.retro footer {
+  display: none;
+}
+
+#retro-screen::after {
+  content: "▌";
+  animation: retroBlink 1s steps(1) infinite;
+}
+
+@keyframes retroBlink {
+  50% { opacity: 0; }
+}
