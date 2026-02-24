@@ -1,4 +1,4 @@
-/* 基本リセット */
+/* 基本 */
 body{
   margin:0;
   font-family:'VT323', monospace;
@@ -18,13 +18,16 @@ body{
   font-size:28px;
 }
 
-/* ERRORモード */
+/* ⭐ ERRORモード（最強版） */
 .error-mode{
   background:black !important;
-  color:red !important;
 }
 
 .error-mode #retro-screen{
+  color:red !important;
+}
+
+.error-mode *{
   color:red !important;
 }
 
