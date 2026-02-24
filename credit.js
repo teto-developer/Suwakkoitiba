@@ -9,11 +9,13 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     "Special Thanks: Everyone"
   ];
 
+  // クレジット表示
   for(let line of lines){
     await typeAndDelete(line, screen);
     await wait(700);
   }
 
+  // クレジット終了後にERROR表示
   showError(screen);
 
 });
@@ -26,7 +28,7 @@ async function typeAndDelete(text, el){
     await wait(40);
   }
 
-  await wait(400);
+  await wait(500);
 
   // Backspace削除
   while(el.textContent.length > 0){
@@ -38,15 +40,38 @@ async function typeAndDelete(text, el){
 
 function showError(screen){
 
-  screen.textContent += "\nFATAL ERROR\n";
-  screen.textContent += "Webを閉じてください\n";
+  screen.textContent = "";
 
-  const clickHandler = ()=>{
+  const errorText = `
+FATAL ERROR
+
+System crashed.
+
+Webを閉じてください
+`;
+
+  typeText(errorText, screen);
+
+  document.addEventListener("click", ()=>{
     window.location.href="/game/";
-  };
+  }, { once:true });
 
-  document.addEventListener("click", clickHandler, { once:true });
+}
 
+function typeText(text, el){
+
+  let i=0;
+  el.textContent="";
+
+  const interval=setInterval(()=>{
+    el.textContent += text[i];
+    i++;
+
+    if(i>=text.length){
+      clearInterval(interval);
+    }
+
+  },40);
 }
 
 function wait(ms){
