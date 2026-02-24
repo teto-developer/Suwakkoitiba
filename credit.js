@@ -41,6 +41,8 @@ function showError(){
 
   screen.textContent = "";
 
+  document.body.classList.add("error-mode");
+  
   const errorText = `
 FATAL ERROR
 
