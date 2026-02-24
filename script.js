@@ -177,3 +177,47 @@ function adjustLayout(){
 
 // リサイズ時も縦横比を維持
 window.addEventListener("resize", adjustLayout);
+
+/* =========================
+   Retro Credit Animation
+========================= */
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+  if (!document.body.classList.contains("retro")) return;
+
+  const screen = document.getElementById("retro-screen");
+
+  await typeRetro("C:\\> credit\n", screen);
+  await waitRetro(600);
+
+  await typeRetro("Running credit.exe...\n\n", screen);
+  await waitRetro(600);
+
+  await typeRetro("制作: Ryouse1\n", screen);
+  await waitRetro(500);
+
+  await typeRetro("Special Thanks: Everyone\n\n", screen);
+  await waitRetro(800);
+
+  await typeRetro("ERROR: Program terminated.\n", screen);
+  await typeRetro("Webを閉じてください。\n", screen);
+});
+
+function typeRetro(text, el){
+  return new Promise(resolve=>{
+    let i=0;
+    const interval=setInterval(()=>{
+      el.textContent+=text[i];
+      i++;
+      if(i>=text.length){
+        clearInterval(interval);
+        resolve();
+      }
+    },35);
+  });
+}
+
+function waitRetro(ms){
+  return new Promise(resolve=>setTimeout(resolve,ms));
+}
