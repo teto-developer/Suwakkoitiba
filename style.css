@@ -314,13 +314,13 @@ footer {
 /* =========================
    Retro Credit Mode
 ========================= */
-
 body.retro {
   background: #000;
   color: #00cc00;
   font-family: 'VT323', monospace;
   font-size: 28px;
-  padding: 40px;
+  margin: 0;
+  padding: 20px;
   overflow: hidden;
 }
 
@@ -331,6 +331,13 @@ body.retro footer {
   display: none;
 }
 
+/* ターミナル表示 */
+#retro-screen {
+  white-space: pre;
+  min-height: 100vh;
+}
+
+/* カーソル */
 #retro-screen::after {
   content: "▌";
   animation: retroBlink 1s steps(1) infinite;
