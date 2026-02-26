@@ -2,6 +2,7 @@
   const owner = "teto-developer";
   const repo = "Suwakkoitiba";
   const branch = "main";
+  document.body.innerHTML = "script loaded";
 
   document.body.style.margin = "0";
   document.body.style.background = "#1e1e1e";
