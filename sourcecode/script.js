@@ -86,18 +86,29 @@ return "📄 ";
 
 /* ================= Cache ================= */
 
-const cache=new Map();
+const repoCache={
+tree:null,
+files:new Map()
+};
 
 /* ================= Repo Load ================= */
 
 async function loadRepo(){
+
+let data;
+
+if(repoCache.tree){
+data=repoCache.tree;
+}else{
 
 const res=await fetch(
 `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
 {cache:"no-store"}
 );
 
-const data=await res.json();
+data=await res.json();
+repoCache.tree=data;
+}
 
 const files=data.tree.filter(f=>
 f.type==="blob" &&
@@ -117,6 +128,36 @@ files.filter(f=>f.path.toLowerCase().includes(q))
 
 }
 
+/* ================= Size Calculator ================= */
+
+function calculateFolderSize(tree){
+
+function dfs(node){
+
+let total=0;
+
+for(const key in node){
+
+const child=node[key];
+
+if(child.__children){
+
+child.__size=
+dfs(child.__children)+
+(child.__info?.size || 0);
+
+total+=child.__size;
+
+}
+
+}
+
+return total;
+}
+
+dfs(tree);
+}
+
 /* ================= Tree Builder ================= */
 
 function renderTree(files){
@@ -130,13 +171,17 @@ let parts=file.path.split("/");
 let current=tree;
 
 parts.forEach((part,i)=>{
+
 if(!current[part]){
 current[part]={
 __children:{},
 __file:null,
-__info:file
+__info:file,
+__size:0
 };
 }
+
+current[part].__size+=file.size;
 
 if(i===parts.length-1){
 current[part].__file=file.path;
@@ -144,10 +189,17 @@ current[part].__info=file;
 }
 
 current=current[part].__children;
+
 });
 });
 
+calculateFolderSize(tree);
+
+/* ================= Draw ================= */
+
 async function draw(node,parent,depth=0){
+
+if(depth>20) return;
 
 for(const name in node){
 
@@ -155,6 +207,7 @@ const data=node[name];
 
 const row=document.createElement("div");
 row.style.paddingLeft=(depth*18)+"px";
+row.style.overflow="hidden";
 
 const label=document.createElement("div");
 label.style.cursor="pointer";
@@ -165,11 +218,18 @@ Object.keys(data.__children).length>0;
 
 const icon=await getIcon(name);
 
-const info=data.__info;
+function formatSize(bytes){
+if(!bytes) return "";
+if(bytes < 1024) return `${bytes} B`;
+if(bytes < 1024*1024) return `${(bytes/1024).toFixed(1)} KB`;
+return `${(bytes/(1024*1024)).toFixed(1)} MB`;
+}
 
 label.innerHTML=
 (hasChildren?"📁 ":"")+icon+name+
-(info?.size?` <span style="opacity:.6">(${(info.size/1024).toFixed(1)}KB)</span>`:"");
+(data.__size
+? ` <span style="opacity:.6">(${formatSize(data.__size)})</span>`
+: "");
 
 row.appendChild(label);
 parent.appendChild(row);
@@ -182,17 +242,31 @@ label.onclick=async()=>{
 if(hasChildren){
 
 if(open){
-childBox?.remove();
+
+if(childBox){
+childBox.style.maxHeight="0px";
+childBox.style.opacity="0";
+setTimeout(()=>childBox?.remove(),200);
+}
+
 open=false;
+
 }else{
 
 childBox=document.createElement("div");
+childBox.style.maxHeight="0px";
+childBox.style.overflow="hidden";
+childBox.style.transition="all .25s ease";
+childBox.style.opacity="0";
+
 row.appendChild(childBox);
 
-childBox.style.opacity="0";
-setTimeout(()=>childBox.style.opacity="1",20);
-
 draw(data.__children,childBox,depth+1);
+
+setTimeout(()=>{
+childBox.style.maxHeight="1000px";
+childBox.style.opacity="1";
+},10);
 
 open=true;
 }
@@ -201,21 +275,20 @@ open=true;
 
 viewer.textContent="Loading...";
 
-if(cache.has(data.__file)){
+if(repoCache.files.has(data.__file)){
 viewer.textContent=
 `// ${data.__file} (cached)\n\n`+
-cache.get(data.__file);
+repoCache.files.get(data.__file);
 return;
 }
 
 const res=await fetch(
-`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${data.__file}?t=${Date.now()}`,
-{cache:"no-store"}
+`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${data.__file}?t=${Date.now()}`
 );
 
 const text=await res.text();
 
-cache.set(data.__file,text);
+repoCache.files.set(data.__file,text);
 
 viewer.textContent=
 `// ${data.__file}\n\n`+
