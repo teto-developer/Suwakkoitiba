@@ -11,26 +11,12 @@
     "ui-monospace, SFMono-Regular, Menlo, monospace";
 
   // --- UI ---
-  const topBar = document.createElement("div");
-  topBar.style.padding = "10px";
-  topBar.style.borderBottom = "1px solid #333";
-
-  const search = document.createElement("input");
-  search.placeholder = "Search files...";
-  search.style.width = "100%";
-  search.style.padding = "8px";
-  search.style.border = "none";
-  search.style.background = "#111";
-  search.style.color = "white";
-
-  topBar.appendChild(search);
-
   const container = document.createElement("div");
   container.style.display = "flex";
   container.style.height = "100vh";
 
   const treeView = document.createElement("div");
-  treeView.style.width = "260px";
+  treeView.style.width = "280px";
   treeView.style.overflow = "auto";
   treeView.style.borderRight = "1px solid #333";
   treeView.style.padding = "10px";
@@ -41,12 +27,20 @@
   viewer.style.overflow = "auto";
   viewer.style.whiteSpace = "pre-wrap";
 
-  document.body.appendChild(topBar);
   container.appendChild(treeView);
   container.appendChild(viewer);
   document.body.appendChild(container);
 
-  // --- Repo取得 ---
+  // --- アイコン判定 ---
+  function getIcon(path){
+    if(path.match(/\.(js)$/)) return "📜 ";
+    if(path.match(/\.(html)$/)) return "🌐 ";
+    if(path.match(/\.(css)$/)) return "🎨 ";
+    if(path.match(/\.(json|md|txt)$/)) return "📄 ";
+    return "📦 ";
+  }
+
+  // --- repo取得 ---
   async function loadRepo(){
 
     try{
@@ -59,105 +53,110 @@
 
       const files = data.tree.filter(f =>
         f.type === "blob" &&
-        f.path.match(/\.(js|html|css|txt|json|md)$/)
+        f.path.match(/\.(js|html|css|json|md|txt)$/)
       );
 
       renderTree(files);
 
-      // 検索
-      search.oninput = () => {
-        const q = search.value.toLowerCase();
-
-        renderTree(
-          files.filter(f =>
-            f.path.toLowerCase().includes(q)
-          )
-        );
-      };
-
     }catch(e){
-      viewer.textContent = "Load error";
+      treeView.textContent = "Load error";
     }
   }
 
-  // --- フォルダツリー表示 ---
+  // --- ツリー構築 ---
   function renderTree(files){
 
     treeView.innerHTML = "";
 
-    const folders = {};
+    const tree = {};
 
     files.forEach(file=>{
       const parts = file.path.split("/");
-
-      let current = folders;
+      let current = tree;
 
       parts.forEach((part,i)=>{
-
         if(!current[part]){
-          current[part] = { __files: [] };
+          current[part] = {
+            __children:{},
+            __filePath:null
+          };
         }
 
         if(i === parts.length-1){
           current[part].__filePath = file.path;
         }
 
-        current = current[part];
+        current = current[part].__children;
       });
     });
 
-    function renderNode(node, parent, depth=0){
+    function draw(node,parent,depth=0){
 
-      Object.keys(node).forEach(key=>{
+      Object.keys(node).forEach(name=>{
 
-        if(key === "__files" || key === "__filePath") return;
+        const data = node[name];
 
-        const div = document.createElement("div");
-        div.textContent = "📁 " + key;
-        div.style.paddingLeft = (depth*14)+"px";
-        div.style.cursor = "pointer";
-        div.style.padding = "4px";
+        const row = document.createElement("div");
+        row.style.paddingLeft = (depth*16)+"px";
 
-        const children = node[key];
+        const label = document.createElement("div");
+        label.style.cursor = "pointer";
+        label.style.padding = "4px";
 
-        let open = false;
+        const hasChildren =
+          Object.keys(data.__children).length > 0;
 
-        div.onclick = () => {
-          open = !open;
+        label.textContent =
+          (hasChildren ? "📁 " : getIcon(name)) + name;
 
-          if(open){
-            renderNode(children, div, depth+1);
-          }else{
-            div.nextSibling?.remove();
+        row.appendChild(label);
+        parent.appendChild(row);
+
+        let open=false;
+        let childBox;
+
+        label.onclick = async ()=>{
+
+          if(hasChildren){
+
+            if(open){
+              childBox.remove();
+              open=false;
+            }else{
+              childBox=document.createElement("div");
+              row.appendChild(childBox);
+
+              // アニメ風表示
+              childBox.style.opacity="0";
+              setTimeout(()=>{
+                childBox.style.opacity="1";
+                childBox.style.transition="0.2s";
+              },10);
+
+              draw(data.__children, childBox, depth+1);
+              open=true;
+            }
+
+          }else if(data.__filePath){
+
+            viewer.textContent="Loading...";
+
+            const res = await fetch(
+              `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${data.__filePath}`
+            );
+
+            viewer.textContent =
+              `// ${data.__filePath}\n\n` +
+              await res.text();
           }
+
         };
 
-        parent.appendChild(div);
       });
 
-      if(node.__filePath){
-        const file = document.createElement("div");
-        file.textContent = "📄 " + node.__filePath.split("/").pop();
-        file.style.paddingLeft = (depth*14+14)+"px";
-        file.style.cursor = "pointer";
-        file.style.padding = "4px";
-
-        file.onclick = async ()=>{
-          viewer.textContent = "Loading...";
-
-          const res = await fetch(
-            `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${node.__filePath}`
-          );
-
-          viewer.textContent =
-            `// ${node.__filePath}\n\n` + await res.text();
-        };
-
-        parent.appendChild(file);
-      }
     }
 
-    renderNode(folders, treeView);
+    draw(tree,treeView);
   }
 
   loadRepo();
