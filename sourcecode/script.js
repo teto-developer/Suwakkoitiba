@@ -47,7 +47,14 @@ container.appendChild(treeView);
 container.appendChild(viewer);
 document.body.appendChild(container);
 
-/* ================= Language Map ================= */
+/* ================= Cache ================= */
+
+const perfCache={
+tree:null,
+files:new Map()
+};
+
+/* ================= Language Icons ================= */
 
 const map={
 js:"javascript",jsx:"react",ts:"typescript",tsx:"react",
@@ -84,30 +91,22 @@ return "📄 ";
 
 }
 
-/* ================= Cache ================= */
-
-const repoCache={
-tree:null,
-files:new Map()
-};
-
-/* ================= Repo Load ================= */
+/* ================= Repo Loader ================= */
 
 async function loadRepo(){
 
 let data;
 
-if(repoCache.tree){
-data=repoCache.tree;
+if(perfCache.tree){
+data=perfCache.tree;
 }else{
 
 const res=await fetch(
-`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
-{cache:"no-store"}
+`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`
 );
 
 data=await res.json();
-repoCache.tree=data;
+perfCache.tree=data;
 }
 
 const files=data.tree.filter(f=>
@@ -115,56 +114,50 @@ f.type==="blob" &&
 f.path.match(/\.(js|html|css|json|md|txt|py|java|go|php|ts|tsx|jsx)$/)
 );
 
-renderTree(files);
+/* ===== 遅延描画（巨大repo対策） ===== */
+
+const chunkSize=80;
+let index=0;
+
+function loadChunk(){
+
+const chunk=files.slice(index,index+chunkSize);
+
+renderTree(chunk,true);
+
+index+=chunkSize;
+
+if(index<files.length){
+requestAnimationFrame(loadChunk);
+}
+
+}
+
+loadChunk();
 
 search.oninput=()=>{
 const q=search.value.toLowerCase();
 
 renderTree(
 files.filter(f=>f.path.toLowerCase().includes(q))
+,false
 );
 
 };
 
 }
 
-/* ================= Size Calculator ================= */
+/* ================= Tree Renderer ================= */
 
-function calculateFolderSize(tree){
+function renderTree(files,appendMode=false){
 
-function dfs(node){
-
-let total=0;
-
-for(const key in node){
-
-const child=node[key];
-
-if(child.__children){
-
-child.__size=
-dfs(child.__children)+
-(child.__info?.size || 0);
-
-total+=child.__size;
-
-}
-
-}
-
-return total;
-}
-
-dfs(tree);
-}
-
-/* ================= Tree Builder ================= */
-
-function renderTree(files){
-
+if(!appendMode){
 treeView.innerHTML="";
+}
 
 const tree={};
+
+/* ----- Tree構築 ----- */
 
 files.forEach(file=>{
 let parts=file.path.split("/");
@@ -181,8 +174,6 @@ __size:0
 };
 }
 
-current[part].__size+=file.size;
-
 if(i===parts.length-1){
 current[part].__file=file.path;
 current[part].__info=file;
@@ -193,9 +184,34 @@ current=current[part].__children;
 });
 });
 
-calculateFolderSize(tree);
+/* ----- サイズ再帰計算 ----- */
 
-/* ================= Draw ================= */
+function calcSize(node){
+
+let total=0;
+
+for(const k in node){
+
+const child=node[k];
+
+if(child.__children){
+
+child.__size=
+calcSize(child.__children)+
+(child.__info?.size || 0);
+
+total+=child.__size;
+
+}
+
+}
+
+return total;
+}
+
+calcSize(tree);
+
+/* ----- 描画 ----- */
 
 async function draw(node,parent,depth=0){
 
@@ -207,7 +223,6 @@ const data=node[name];
 
 const row=document.createElement("div");
 row.style.paddingLeft=(depth*18)+"px";
-row.style.overflow="hidden";
 
 const label=document.createElement("div");
 label.style.cursor="pointer";
@@ -220,16 +235,14 @@ const icon=await getIcon(name);
 
 function formatSize(bytes){
 if(!bytes) return "";
-if(bytes < 1024) return `${bytes} B`;
-if(bytes < 1024*1024) return `${(bytes/1024).toFixed(1)} KB`;
+if(bytes<1024) return `${bytes} B`;
+if(bytes<1024*1024) return `${(bytes/1024).toFixed(1)} KB`;
 return `${(bytes/(1024*1024)).toFixed(1)} MB`;
 }
 
 label.innerHTML=
 (hasChildren?"📁 ":"")+icon+name+
-(data.__size
-? ` <span style="opacity:.6">(${formatSize(data.__size)})</span>`
-: "");
+(data.__size?` <span style="opacity:.6">(${formatSize(data.__size)})</span>`:"");
 
 row.appendChild(label);
 parent.appendChild(row);
@@ -237,36 +250,24 @@ parent.appendChild(row);
 let open=false;
 let childBox;
 
-label.onclick=async()=>{
+label.onclick=()=>{
 
 if(hasChildren){
 
 if(open){
 
-if(childBox){
-childBox.style.maxHeight="0px";
-childBox.style.opacity="0";
-setTimeout(()=>childBox?.remove(),200);
-}
-
+childBox?.remove();
 open=false;
 
 }else{
 
 childBox=document.createElement("div");
-childBox.style.maxHeight="0px";
 childBox.style.overflow="hidden";
-childBox.style.transition="all .25s ease";
-childBox.style.opacity="0";
+childBox.style.transition="all .2s ease";
 
 row.appendChild(childBox);
 
 draw(data.__children,childBox,depth+1);
-
-setTimeout(()=>{
-childBox.style.maxHeight="1000px";
-childBox.style.opacity="1";
-},10);
 
 open=true;
 }
@@ -275,24 +276,24 @@ open=true;
 
 viewer.textContent="Loading...";
 
-if(repoCache.files.has(data.__file)){
+if(perfCache.files.has(data.__file)){
 viewer.textContent=
-`// ${data.__file} (cached)\n\n`+
-repoCache.files.get(data.__file);
+`// ${data.__file}\n\n`+
+perfCache.files.get(data.__file);
 return;
 }
 
-const res=await fetch(
-`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${data.__file}?t=${Date.now()}`
-);
-
-const text=await res.text();
-
-repoCache.files.set(data.__file,text);
+fetch(
+`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${data.__file}`
+)
+.then(r=>r.text())
+.then(text=>{
+perfCache.files.set(data.__file,text);
 
 viewer.textContent=
 `// ${data.__file}\n\n`+
 text;
+});
 
 }
 
@@ -305,6 +306,8 @@ text;
 draw(tree,treeView);
 
 }
+
+/* ================= Start ================= */
 
 loadRepo();
 
