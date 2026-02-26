@@ -11,7 +11,6 @@
 
   const viewer = document.createElement("pre");
   viewer.style.padding = "16px";
-  viewer.style.margin = "0";
   viewer.style.height = "100vh";
   viewer.style.overflowY = "auto";
   viewer.style.whiteSpace = "pre-wrap";
@@ -21,26 +20,39 @@
 
   async function loadRepo() {
     try {
-      // 👇 これがポイント
       const treeURL =
         `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
 
       const treeRes = await fetch(treeURL);
       const treeData = await treeRes.json();
 
-      const files = treeData.tree.filter(item => item.type === "blob");
+      // テキストファイルだけ
+      const files = treeData.tree.filter(file =>
+        file.type === "blob" &&
+        file.path.match(/\.(js|html|css|txt|json|md)$/)
+      );
 
       let output = "";
 
-      for (const file of files) {
-        const rawURL =
-          `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file.path}`;
+      await Promise.all(
+        files.map(async file => {
+          try {
+            const rawURL =
+              `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file.path}`;
 
-        const res = await fetch(rawURL);
-        const text = await res.text();
+            const res = await fetch(rawURL);
+            const text = await res.text();
 
-        output += `// ${file.path}\n${text}\n\n`;
-      }
+            output += `// ${file.path}\n${text}\n\n`;
+
+            // 途中でも更新（超重要）
+            viewer.textContent = output;
+
+          } catch (e) {
+            output += `// ${file.path}\nERROR\n\n`;
+          }
+        })
+      );
 
       viewer.textContent = output;
 
