@@ -31,83 +31,115 @@
   container.appendChild(viewer);
   document.body.appendChild(container);
 
-  // --- アイコン判定 ---
-  function getIcon(path){
-    if(path.match(/\.(js)$/)) return "📜 ";
-    if(path.match(/\.(html)$/)) return "🌐 ";
-    if(path.match(/\.(css)$/)) return "🎨 ";
-    if(path.match(/\.(json|md|txt)$/)) return "📄 ";
-    return "📦 ";
+  // --- IndexedDB ---
+  function openDB(){
+    return new Promise((resolve,reject)=>{
+      const req = indexedDB.open("repoCache",1);
+
+      req.onupgradeneeded = e=>{
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains("files")){
+          db.createObjectStore("files",{keyPath:"path"});
+        }
+      };
+
+      req.onsuccess = e=> resolve(e.target.result);
+      req.onerror = reject;
+    });
   }
 
-  // --- repo取得 ---
+  async function getCache(db,path){
+    return new Promise(res=>{
+      const tx = db.transaction("files","readonly");
+      const store = tx.objectStore("files");
+      const req = store.get(path);
+
+      req.onsuccess = ()=> res(req.result);
+      req.onerror = ()=> res(null);
+    });
+  }
+
+  async function setCache(db,file){
+    const tx = db.transaction("files","readwrite");
+    tx.objectStore("files").put(file);
+  }
+
+  // --- ファイルアイコン ---
+  function getIcon(path){
+    if(path.endsWith(".js")) return "📜 ";
+    if(path.endsWith(".html")) return "🌐 ";
+    if(path.endsWith(".css")) return "🎨 ";
+    return "📄 ";
+  }
+
   async function loadRepo(){
 
     try{
 
-      const res = await fetch(
+      const db = await openDB();
+
+      const treeRes = await fetch(
         `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`
       );
 
-      const data = await res.json();
+      const treeData = await treeRes.json();
 
-      const files = data.tree.filter(f =>
+      const files = treeData.tree.filter(f =>
         f.type === "blob" &&
         f.path.match(/\.(js|html|css|json|md|txt)$/)
       );
 
-      renderTree(files);
+      renderTree(files,db);
 
     }catch(e){
       treeView.textContent = "Load error";
     }
   }
 
-  // --- ツリー構築 ---
-  function renderTree(files){
+  function renderTree(files,db){
 
-    treeView.innerHTML = "";
+    treeView.innerHTML="";
 
-    const tree = {};
+    const tree={};
 
     files.forEach(file=>{
-      const parts = file.path.split("/");
-      let current = tree;
+      const parts=file.path.split("/");
+      let current=tree;
 
       parts.forEach((part,i)=>{
         if(!current[part]){
-          current[part] = {
+          current[part]={
             __children:{},
             __filePath:null
           };
         }
 
-        if(i === parts.length-1){
-          current[part].__filePath = file.path;
+        if(i===parts.length-1){
+          current[part].__filePath=file.path;
         }
 
-        current = current[part].__children;
+        current=current[part].__children;
       });
     });
 
-    function draw(node,parent,depth=0){
+    async function draw(node,parent,depth=0){
 
-      Object.keys(node).forEach(name=>{
+      for(const name in node){
 
-        const data = node[name];
+        const data=node[name];
 
-        const row = document.createElement("div");
-        row.style.paddingLeft = (depth*16)+"px";
+        const row=document.createElement("div");
+        row.style.paddingLeft=(depth*16)+"px";
 
-        const label = document.createElement("div");
-        label.style.cursor = "pointer";
-        label.style.padding = "4px";
+        const label=document.createElement("div");
+        label.style.cursor="pointer";
+        label.style.padding="4px";
 
-        const hasChildren =
-          Object.keys(data.__children).length > 0;
+        const hasChildren=
+          Object.keys(data.__children).length>0;
 
-        label.textContent =
-          (hasChildren ? "📁 " : getIcon(name)) + name;
+        label.textContent=
+          (hasChildren?"📁 ":"📄 ")+name;
 
         row.appendChild(label);
         parent.appendChild(row);
@@ -115,7 +147,7 @@
         let open=false;
         let childBox;
 
-        label.onclick = async ()=>{
+        label.onclick=async()=>{
 
           if(hasChildren){
 
@@ -126,14 +158,7 @@
               childBox=document.createElement("div");
               row.appendChild(childBox);
 
-              // アニメ風表示
-              childBox.style.opacity="0";
-              setTimeout(()=>{
-                childBox.style.opacity="1";
-                childBox.style.transition="0.2s";
-              },10);
-
-              draw(data.__children, childBox, depth+1);
+              draw(data.__children,childBox,depth+1);
               open=true;
             }
 
@@ -141,19 +166,33 @@
 
             viewer.textContent="Loading...";
 
-            const res = await fetch(
-              `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${data.__filePath}`
+            const cache = await getCache(db,data.__filePath);
+
+            if(cache){
+              viewer.textContent=
+                `// ${data.__filePath} (cached)\n\n`+
+                cache.content;
+              return;
+            }
+
+            const res=await fetch(
+              `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${data.__filePath}?t=${Date.now()}`
             );
 
-            viewer.textContent =
-              `// ${data.__filePath}\n\n` +
-              await res.text();
+            const text=await res.text();
+
+            viewer.textContent=
+              `// ${data.__filePath}\n\n`+
+              text;
+
+            await setCache(db,{
+              path:data.__filePath,
+              content:text
+            });
           }
 
         };
-
-      });
-
+      }
     }
 
     draw(tree,treeView);
